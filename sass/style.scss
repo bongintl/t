@@ -1,7 +1,21 @@
 body {
     background:black;
+    height:4000px;
 }
 
-p {
-    color:white;
+.container {
+    position:fixed;
+    z-index:200;
+}
+
+#tioLogo {
+    width:50%;
+    left:25%;
+    position:fixed;
+    z-index:-100;
+    top:35%;
+    
+    img {
+        width:100%;
+    }
 }

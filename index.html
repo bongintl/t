@@ -7,6 +7,126 @@
     <link rel="stylesheet" href="css/style.css" type="text/css" />
 </head>
 <body>
-    <p>Test</p>
+
+    
+    
+
+    
+
+    
+    <div id="tioLogo">
+       <img src="img/logo.svg"/>
+    </div>  
+    
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.js"></script>
+        <script type="text/javascript" src="js/cloth.js"></script>
+        
+        <script>
+	        
+			function normalize(x, min, max){
+				return (x-min) / (max-min);
+			}
+			
+			function scale(x, oldMin, oldMax, newMin, newMax){
+				return newMin + normalize(x, oldMin, oldMax) * (newMax - newMin);
+			}
+			
+			function distAtDepth(dist, depth){
+				
+				var max = depth * tanHalfFov;
+				
+				return scale(dist, -1, 1, -max, max);
+				
+			}
+        
+            var fov = 45,
+            	fovRad = scale(fov, 0, 360, 0, Math.PI * 2),
+            	tanHalfFov = Math.tan(fovRad/2),
+            	scene = new THREE.Scene(),
+				camera = new THREE.PerspectiveCamera( fov, window.innerWidth / window.innerHeight, 0.1, 30000 );
+				
+            scene.add(camera);
+            
+            var renderer = new THREE.WebGLRenderer({antialias: true, alpha:true});
+            
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            renderer.setClearColor(0x000000, 0);
+            document.body.appendChild( renderer.domElement );
+			                        
+            var gravity = new THREE.Vector3( 0, -100/1000, 0),
+            	nothing = new THREE.Vector3(),
+            	wind = new THREE.Vector3(),
+            	wheel = new THREE.Vector2(),
+            	mouse = new THREE.Vector2(),
+            	raycaster = new THREE.Raycaster(),
+            	imgs = ['img/01.jpg', 'img/01.jpg', 'img/01.jpg', 'img/01.jpg'],
+            	sarongs = [
+	            	new Cloth(imgs[0], -28, -2.5, -50, 20, 30),
+	            	new Cloth(imgs[1], 8, -2.5, -50, 20, 30),
+	            	new Cloth(imgs[2], -25, -42.5, -50, 20, 30),
+	            	new Cloth(imgs[3], 5, -42.5, -50, 20, 30)
+            	],
+            	lightZ = -30,
+            	light = new THREE.PointLight( 0xFFFFFF, 1.8, 70),
+            	frustum = new THREE.Frustum().setFromMatrix(camera.projectionMatrix);
+            	
+            light.position.set(0,0,lightZ);
+            scene.add(light);
+            
+            for(var i = 0; i < sarongs.length; ++i){
+	            scene.add(sarongs[i].mesh);
+            }
+            
+            var hasScrolled;
+			
+			raycaster.setFromCamera(new THREE.Vector2(-1,-1), camera);
+			var winTopLeft = raycaster.ray.at(-50);
+			raycaster.setFromCamera(new THREE.Vector2(1.5,1.5), camera);
+			var winBottomRight = raycaster.ray.at(-50);
+			
+			window.addEventListener('mousemove', function(e){
+				mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+				mouse.y = (e.clientY / window.innerHeight) * -2 + 1;
+			});
+			                        
+            var then = Date.now();
+                        
+            function render(){
+	            
+	            var now = Date.now(),
+	            	deltaT = now - then,
+	            	deltaTSq = deltaT * deltaT,
+	            	frameGravity = gravity.clone().multiplyScalar(deltaT),
+	            	sarong;
+	            
+	            wheel.y = window.pageYOffset/window.innerHeight;
+	            raycaster.setFromCamera(wheel, camera);
+	            var frameWheel = new THREE.Vector3(0, raycaster.ray.at(50).y, 0);
+	            raycaster.setFromCamera(mouse, camera);
+	            light.position.copy(raycaster.ray.at(-lightZ));
+				
+				wind.z = -.3 * Math.sin(now/3000);
+				wind.y = -.8 * Math.sin(now/1827);
+				wind.x = Math.sin(now/1029) * 2;
+				
+				for(var i = 0; i < sarongs.length; ++i){
+					sarong = sarongs[i];
+					sarong.moveTo(frameWheel);
+	                sarong.tick(frustum, gravity, wind);
+				}
+				
+                renderer.render( scene, camera );
+                
+                then = now;
+                
+            	requestAnimationFrame( render );
+                
+            }
+            
+            render();
+                        
+        </script>
+        
+        
 </body>
 </html>
